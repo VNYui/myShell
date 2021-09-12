@@ -3,6 +3,7 @@ import sys
 import re
 import subprocess
 from pathlib import Path
+import socket 
 
 class myShell:
   def __init__(self):
@@ -19,7 +20,8 @@ class parser:
       self.links_path = Path.cwd() / 'db.txt'
       self.mf = manageFile()
       self.sub = subProc()
-
+      self.net = Network()
+  
   def input(self,input):
     input = input.split()
     onion = re.compile(r"(?:https?://)?(?:www)?(\S*?\.onion)\b")
@@ -37,13 +39,20 @@ class parser:
     
     if input[0] == 'help':
         print('''
-          Recon
-            input IPV4 to start scan the target 
+          Scan
+            input IPV4 to start nmap scan:
+              Eg : 127.0.0.1 -sV -A --script=*  
 
           TOR
             input an onion link to add it to database 
-            Exemple : bcloudwenjxgcxjh6uheyt72a5isimzgg4kv5u74jb2s22y3hzpwh6id.onion/ description
+              Eg : bcloudwenjxgcxjh6uheyt72a5isimzgg4kv5u74jb2s22y3hzpwh6id.onion/ description
             show : show tor links
+          
+          Network:
+            dns = resolve ip addr by hostname
+              Eg : dns 127.0.0.1 8.8.8.8 
+            rdns = resolve hostname by ip addr
+              Eg : www.google.com www.yahoo.fr
 
           MISC 
             clear : clean the shell
@@ -52,11 +61,15 @@ class parser:
         ''')
 
     if ipv4.match(input[0]):
-        self.sub.exec()
+        self.sub.exec(input)
 
     if input[0] == 'clear':
         os.system('cls' if os.name == 'nt' else 'clear')
 
+    if input[0] == 'dns':
+        self.net.dns_lookup(input)
+    if input[0] == 'rdns':
+        self.net.dns_reverse_lookup(input)
     if input[0] == 'exit':
         sys.exit()  
 
@@ -83,11 +96,30 @@ class manageFile:
 class subProc:
   def __init__(self):
       self.nmap = Path.cwd() / 'Nmap/nmap.exe'
-
+  
   def exec(self, input):
     result = subprocess.run(
-      [self.nmap, "-sV", input],capture_output=True, text=True
+      [self.nmap, *input[1:], input[0]],capture_output=True, text=True
     )
+    
+    print(result.args)
     print(result.stdout)
+
+class Network:
+  def __init__(self):
+    self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  
+  def dns_lookup(self, input):
+    for dns in input[1:]:
+      ip = socket.gethostbyname(dns)
+      print(ip)
+    return ip    
+  
+  def dns_reverse_lookup(self,input):
+    for ip in input[1:]:
+      dns = socket.gethostbyaddr(ip)
+      print(dns)
+    return dns
+  
 if __name__ == '__main__':
   start = myShell()
