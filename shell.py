@@ -4,16 +4,32 @@ import re
 import subprocess
 from pathlib import Path
 import socket 
+#VOC
+import pyaudio 
+import speech_recognition as sr 
 
 class myShell:
   def __init__(self):
       self.Parse = parser()
+      self.r = sr.Recognizer()
       self.start_shell()
-  
+
   def start_shell(self):
       while 'to keep prompt open':
         box = input('my dark shell : ')
         self.Parse.input(box)
+
+  
+  def speech(self):
+    with sr.Microphone(device_index=2) as source:                
+      audio = self.r.listen(source)
+      try:
+          result = self.r.recognize_google(audio, language='fr-FR')
+          words = result.lower()
+          print('>', words)
+      except LookupError:
+          print("Please, speak more clearly")
+          
 
 class parser:
   def __init__(self):
@@ -21,58 +37,62 @@ class parser:
       self.mf = manageFile()
       self.sub = subProc()
       self.net = Network()
-  
+
   def input(self,input):
     input = input.split()
     onion = re.compile(r"(?:https?://)?(?:www)?(\S*?\.onion)\b")
     ipv4  = re.compile(r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
-    if input[0] == 'show':
-        for line in self.mf.read_file(self.links_path):
-          print(line)
+    try :
+      if input[0] == 'show':
+          for line in self.mf.read_file(self.links_path):
+            print(line)
 
-    if onion.match(input[0]):
-        print('ONION FOUND - link stored')
-        if self.links_path.exists():
-          self.mf.append_file(self.links_path,input)
-        else :
-          self.mf.create_file(self.links_path, input)
-    
-    if input[0] == 'help':
-        print('''
-          Scan
-            input IPV4 to start nmap scan:
-              Eg : 127.0.0.1 -sV -A --script=*  
+      if onion.match(input[0]):
+          print('ONION FOUND - link stored')
+          if self.links_path.exists():
+            self.mf.append_file(self.links_path,input)
+          else :
+            self.mf.create_file(self.links_path, input)
 
-          TOR
-            input an onion link to add it to database 
-              Eg : bcloudwenjxgcxjh6uheyt72a5isimzgg4kv5u74jb2s22y3hzpwh6id.onion/ description
-            show : show tor links
+      if input[0] == 'help':
+          print('''
+            Scan
+              input IPV4 to start nmap scan:
+                Eg : 127.0.0.1 -sV -A --script=*  
+
+            TOR
+              input an onion link to add it to database 
+                Eg : bcloudwenjxgcxjh6uheyt72a5isimzgg4kv5u74jb2s22y3hzpwh6id.onion/ description
+              show : show tor links
+            
+            Network:
+              dns = resolve ip addr by hostname
+                Eg : dns 127.0.0.1 8.8.8.8 
+              rdns = resolve hostname by ip addr
+                Eg : www.google.com www.yahoo.fr
+
+            MISC 
+              clear : clean the shell
+              exit : quit the shell
+
+          ''')
+
+      if ipv4.match(input[0]):
+          self.sub.exec(input)
+
+      if input[0] == 'clear':
+          os.system('cls' if os.name == 'nt' else 'clear')
           
-          Network:
-            dns = resolve ip addr by hostname
-              Eg : dns 127.0.0.1 8.8.8.8 
-            rdns = resolve hostname by ip addr
-              Eg : www.google.com www.yahoo.fr
 
-          MISC 
-            clear : clean the shell
-            exit : quit the shell
-
-        ''')
-
-    if ipv4.match(input[0]):
-        self.sub.exec(input)
-
-    if input[0] == 'clear':
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-    if input[0] == 'dns':
-        self.net.dns_lookup(input)
-    if input[0] == 'rdns':
-        self.net.dns_reverse_lookup(input)
-    if input[0] == 'exit':
-        sys.exit()  
-
+      if input[0] == 'dns':
+          self.net.dns_lookup(input)
+      if input[0] == 'rdns':
+          self.net.dns_reverse_lookup(input)
+      if input[0] == 'exit':
+          sys.exit()  
+    except IndexError:
+      print('Enter a valid command')
+      
 class manageFile:
   def create_file(self,file,input):
     with open(file, 'wt', encoding='utf-8') as f:
