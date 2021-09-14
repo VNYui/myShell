@@ -1,20 +1,47 @@
+from __future__ import print_function, unicode_literals
+from PyInquirer import prompt, print_json
 import os
 import sys
 import re
 import subprocess
 from pathlib import Path
+import toml
 import socket 
 #VOC
 import pyaudio 
 import speech_recognition as sr 
-
+from pprint import pprint
 class myShell:
   def __init__(self):
       self.Parse = parser()
       self.r = sr.Recognizer()
       self.subproc = subProc()
-      self.subproc.exec_elisa()
-      self.start_shell()
+      self.setup_path = Path.cwd() / 'Elisa/config.toml'
+      if self.setup_path.exists():
+        self.subproc.exec_elisa()
+        self.start_shell()
+      else :
+        self.setup()
+        self.subproc.exec_elisa()
+        self.start_shell()
+
+  def setup(self):
+      
+      #LIST MICROPHONE -> LIST 
+      pprint(sr.Microphone.list_microphone_names())
+      questions = [
+          {
+              'type': 'input',
+              'name': 'mic_devices',
+              'message': 'Choose your input device',
+          }
+      ]
+
+      answers = prompt(questions)
+      #GET INPUT FROM PARENT PROCESS AND STORE IT TO setup.json
+      #STORE TO SETUP.JSON 
+      with open(self.setup_path, 'w') as f:
+          toml.dump(answers, f)
       
 
   def start_shell(self):
@@ -74,7 +101,7 @@ class parser:
       if input[0] == 'clear':
           os.system('cls' if os.name == 'nt' else 'clear')
           
-
+    
       if input[0] == 'dns':
           self.net.dns_lookup(input)
       if input[0] == 'rdns':
@@ -82,7 +109,7 @@ class parser:
       if input[0] == 'exit':
           sys.exit()  
     except IndexError:
-      print('Enter a valid command')
+      pass
       
 class manageFile:
   def create_file(self,file,input):
@@ -107,7 +134,7 @@ class manageFile:
 class subProc:
   def __init__(self):
       self.nmap = Path.cwd() / 'Nmap/nmap.exe'
-      self.Elisa = Path.cwd() / 'Elisa.py'
+      self.path_Elisa = Path.cwd() / 'Elisa/Elisa.py'
 
   def exec(self, input):
     result = subprocess.run(
@@ -115,7 +142,7 @@ class subProc:
     )
   
   def exec_elisa(self):
-    cmd = 'python3 Elisa.py'
+    cmd = f'python3 {self.path_Elisa}'
     proc = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
     return proc
   
