@@ -8,7 +8,7 @@ from pathlib import Path
 class Elisa:
     def __init__(self):
         self.r = sr.Recognizer()
-        self.client = texttospeech.TextToSpeechClient()
+        #self.client = texttospeech.TextToSpeechClient()
         self.mp3_path = Path.cwd() / 'voice/voice.mp3'
 
         while 'to keep Elisa alive':
@@ -24,11 +24,13 @@ class Elisa:
           result = self.r.recognize_google(self.listen(), language='fr-FR')
           words = result.lower()
           print('>', words)
-          self.speak()
+          #self.speak()
           return words
         except LookupError:
           print("Please, speak more clearly")
-    
+        except sr.UnknownValueError:
+          pass
+          
     def create_mp3(self):
         # Set the text input to be synthesized
         synthesis_input = texttospeech.SynthesisInput(text=self.text)

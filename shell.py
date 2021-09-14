@@ -12,31 +12,22 @@ class myShell:
   def __init__(self):
       self.Parse = parser()
       self.r = sr.Recognizer()
+      self.subproc = subProc()
+      self.subproc.exec_elisa()
       self.start_shell()
+      
 
   def start_shell(self):
       while 'to keep prompt open':
         box = input('my dark shell : ')
         self.Parse.input(box)
-
-  
-  def speech(self):
-    with sr.Microphone(device_index=2) as source:                
-      audio = self.r.listen(source)
-      try:
-          result = self.r.recognize_google(audio, language='fr-FR')
-          words = result.lower()
-          print('>', words)
-      except LookupError:
-          print("Please, speak more clearly")
           
-
 class parser:
   def __init__(self):
       self.links_path = Path.cwd() / 'db.txt'
       self.mf = manageFile()
       self.sub = subProc()
-      self.net = Network()
+      self.net = network()
 
   def input(self,input):
     input = input.split()
@@ -116,16 +107,23 @@ class manageFile:
 class subProc:
   def __init__(self):
       self.nmap = Path.cwd() / 'Nmap/nmap.exe'
-  
+      self.Elisa = Path.cwd() / 'Elisa.py'
+
   def exec(self, input):
     result = subprocess.run(
       [self.nmap, *input[1:], input[0]],capture_output=True, text=True
     )
-    
-    print(result.args)
-    print(result.stdout)
+  
+  def exec_elisa(self):
+    cmd = 'python3 Elisa.py'
+    proc = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
+    return proc
+  
 
-class Network:
+    #print(result.args)
+    #print(result.stdout)
+
+class network:
   def __init__(self):
     self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   
